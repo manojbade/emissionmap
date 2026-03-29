@@ -80,9 +80,36 @@
               <span class="em-results-count" th:unless="${vm.hasResults()}">No facilities found</span>
               <!-- Check another -->
               <a href="/" class="em-btn-secondary">Check another address</a>
+              <button type="button"
+                      class="em-btn-secondary"
+                      id="feedback-open"
+                      aria-haspopup="dialog"
+                      aria-controls="feedback-modal"
+                      aria-expanded="false">
+                Feedback
+              </button>
             </div>
 
           </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="feedback-modal" class="em-modal-backdrop" hidden>
+      <div class="em-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title">
+        <button type="button" class="em-modal-close" id="feedback-close" aria-label="Close feedback form">×</button>
+        <form method="post" action="/feedback" class="em-feedback em-feedback-modal">
+          <input type="hidden" name="page" value="results" />
+          <input type="hidden" name="helpful" id="feedback-helpful" value="" />
+          <h6 id="feedback-modal-title">Send feedback</h6>
+          <p class="em-feedback-copy">Was this search helpful? Tell us what worked or what felt off.</p>
+          <div class="em-feedback-btns" role="group" aria-label="Helpful selection">
+            <button type="button" class="em-feedback-btn" data-helpful-value="true">👍 Yes</button>
+            <button type="button" class="em-feedback-btn" data-helpful-value="false">👎 No</button>
+          </div>
+          <textarea name="comment" class="em-feedback-textarea" rows="4"
+                    placeholder="What were you looking for? (optional)" maxlength="500"></textarea>
+          <button type="submit" class="em-feedback-submit">Submit feedback</button>
         </form>
       </div>
     </div>
@@ -175,24 +202,10 @@
           <!-- Card links -->
           <div class="em-card-links">
             <a th:href="${facility.echoUrl()}" target="_blank" rel="noopener">Verify on EPA ECHO ↗</a>
-            <a th:href="@{/facility/{id}(id=${facility.facilityId()})}">View details →</a>
+            <a th:href="@{/facility/{id}(id=${facility.facilityId()})}" target="_blank" rel="noopener">View details →</a>
           </div>
 
         </div><!-- end facility card -->
-
-        <!-- Feedback form -->
-        <form th:if="${vm.hasResults()}" method="post" action="/feedback" class="em-feedback">
-          <input type="hidden" name="page" value="results" />
-          <h6>Was this result helpful?</h6>
-          <div class="em-feedback-btns">
-            <button type="submit" name="helpful" value="true"  class="em-feedback-btn">👍 Yes</button>
-            <button type="submit" name="helpful" value="false" class="em-feedback-btn">👎 No</button>
-          </div>
-          <textarea name="comment" class="em-feedback-textarea" rows="2"
-                    placeholder="What were you looking for? (optional)" maxlength="500"></textarea>
-          <br>
-          <button type="submit" class="em-feedback-submit">Submit feedback</button>
-        </form>
 
         <!-- Data footer -->
         <div class="em-data-footer">
@@ -359,6 +372,67 @@
   } else {
     initEmissionMap();
   }
+  </script>
+
+  <script>
+  (function () {
+    const modal = document.getElementById('feedback-modal');
+    const openButton = document.getElementById('feedback-open');
+    const closeButton = document.getElementById('feedback-close');
+    const helpfulInput = document.getElementById('feedback-helpful');
+    const helpfulButtons = Array.from(document.querySelectorAll('[data-helpful-value]'));
+
+    if (!modal || !openButton || !closeButton || !helpfulInput) return;
+
+    function syncHelpfulButtons(value) {
+      helpfulButtons.forEach(function (button) {
+        const active = button.dataset.helpfulValue === value;
+        button.classList.toggle('em-feedback-btn-active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    }
+
+    function openModal() {
+      modal.hidden = false;
+      openButton.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('em-modal-open');
+      window.requestAnimationFrame(function () {
+        const textarea = modal.querySelector('textarea');
+        if (textarea) textarea.focus();
+      });
+    }
+
+    function closeModal() {
+      modal.hidden = true;
+      openButton.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('em-modal-open');
+      openButton.focus();
+    }
+
+    openButton.addEventListener('click', openModal);
+    closeButton.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', function (event) {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !modal.hidden) {
+        closeModal();
+      }
+    });
+
+    helpfulButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        helpfulInput.value = button.dataset.helpfulValue;
+        syncHelpfulButtons(helpfulInput.value);
+      });
+    });
+
+    syncHelpfulButtons(helpfulInput.value);
+  })();
   </script>
 
 </body>

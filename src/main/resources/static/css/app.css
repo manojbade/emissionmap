@@ -33,6 +33,10 @@ body {
   margin: 0;
 }
 
+body.em-modal-open {
+  overflow: hidden;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   font-weight: 700;
@@ -506,6 +510,11 @@ body.em-results-page .em-masthead {
   padding: 1.1rem 1.1rem 1.25rem;
 }
 .em-feedback h6 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.65rem; }
+.em-feedback-copy {
+  color: var(--em-muted);
+  font-size: 0.82rem;
+  margin-bottom: 0.85rem;
+}
 .em-feedback-btns { display: flex; gap: 0.5rem; margin-bottom: 0.65rem; }
 .em-feedback-btn {
   background: var(--em-surface);
@@ -518,6 +527,11 @@ body.em-results-page .em-masthead {
   transition: border-color 0.15s;
 }
 .em-feedback-btn:hover { border-color: var(--em-accent); }
+.em-feedback-btn-active {
+  background: rgba(122, 88, 34, 0.08);
+  border-color: rgba(122, 88, 34, 0.45);
+  color: var(--em-accent-strong);
+}
 .em-feedback-textarea {
   background: var(--em-surface);
   border: 1.5px solid var(--em-border);
@@ -541,6 +555,45 @@ body.em-results-page .em-masthead {
   padding: 0.38rem 0.85rem;
 }
 .em-feedback-submit:hover { background: #2f3d46; }
+
+.em-feedback-modal {
+  margin-top: 0;
+  padding: 1.2rem 1.2rem 1.25rem;
+}
+
+.em-modal-backdrop {
+  align-items: center;
+  background: rgba(31, 37, 42, 0.58);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 250;
+}
+
+.em-modal-dialog {
+  max-width: 400px;
+  position: relative;
+  width: 100%;
+}
+
+.em-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--em-muted);
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 0.1rem;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+}
+
+.em-modal-close:hover {
+  color: var(--em-ink);
+}
 
 /* ── Error / alert ──────────────────────────────────────────────────── */
 .em-alert-error {
