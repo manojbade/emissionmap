@@ -171,6 +171,65 @@ p { margin-top: 0; margin-bottom: 1rem; }
 .em-control-group { align-items: center; display: flex; gap: 0.45rem; }
 .em-control-label { color: var(--em-muted); font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
 
+.em-autocomplete-field {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.em-autocomplete-field .em-address-input {
+  width: 100%;
+}
+
+.em-autocomplete-dropdown {
+  background: var(--em-bg);
+  border: 1px solid rgba(122, 88, 34, 0.12);
+  border-radius: calc(var(--em-radius) - 2px);
+  box-shadow: 0 14px 32px rgba(31, 37, 42, 0.14);
+  left: 0;
+  margin-top: 0.45rem;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 30;
+}
+
+.em-autocomplete-option {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(31, 37, 42, 0.07);
+  color: var(--em-ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.8rem 0.95rem;
+  text-align: left;
+  width: 100%;
+}
+
+.em-autocomplete-option:last-child {
+  border-bottom: none;
+}
+
+.em-autocomplete-option:hover,
+.em-autocomplete-option:focus-visible {
+  background: #fff;
+  outline: none;
+}
+
+.em-autocomplete-option-title {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.em-autocomplete-option-subtitle {
+  color: var(--em-muted);
+  font-size: 0.76rem;
+}
+
 /* ── Homepage hero ──────────────────────────────────────────────────── */
 .em-hero {
   padding: 5rem 0 3.5rem;
@@ -500,6 +559,118 @@ body.em-results-page .em-masthead {
 .em-popup a { color: var(--em-accent); font-weight: 600; font-size: 0.78rem; }
 .leaflet-popup-content-wrapper { border-radius: 8px !important; box-shadow: 0 4px 16px rgba(0,0,0,0.14) !important; }
 
+/* ── Facility detail ────────────────────────────────────────────────── */
+.em-facility-page {
+  padding: 3rem 0 4.5rem;
+}
+
+.em-facility-header {
+  align-items: flex-end;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.em-facility-copy {
+  max-width: 44rem;
+}
+
+.em-facility-address,
+.em-facility-parent {
+  color: var(--em-muted);
+  font-size: 0.98rem;
+}
+
+.em-facility-parent strong {
+  color: var(--em-ink);
+}
+
+.em-facility-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.em-facility-error {
+  margin-bottom: 2rem;
+}
+
+.em-charts-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-bottom: 2rem;
+}
+
+.em-chart-card {
+  background: var(--em-surface);
+  border-radius: var(--em-radius);
+  box-shadow: var(--em-shadow-card);
+  padding: 1.35rem;
+}
+
+.em-chart-copy h2,
+.em-data-table-header h2 {
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+}
+
+.em-chart-copy p,
+.em-data-table-header p {
+  color: var(--em-muted);
+  font-size: 0.88rem;
+  margin-bottom: 1rem;
+}
+
+.em-chart-shell {
+  background: #fff;
+  border-radius: calc(var(--em-radius) - 2px);
+  margin: 0 auto;
+  max-width: 700px;
+  min-height: 320px;
+  padding: 0.75rem;
+  position: relative;
+}
+
+.em-chart-shell canvas {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.em-data-table {
+  background: var(--em-surface);
+  border-radius: var(--em-radius);
+  box-shadow: var(--em-shadow-card);
+  padding: 1.35rem;
+}
+
+.em-data-table table {
+  margin-bottom: 0;
+}
+
+.em-data-table th {
+  border-bottom: 1px solid var(--em-border);
+  color: var(--em-muted);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.em-data-table td {
+  font-size: 0.88rem;
+  vertical-align: middle;
+}
+
+.em-data-table td:last-child,
+.em-data-table th:last-child {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
 /* ── Responsive ─────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   body.em-results-page {
@@ -536,4 +707,7 @@ body.em-results-page .em-masthead {
   .em-search-controls { flex-direction: column; align-items: flex-start; }
   .em-results-header-inner { flex-direction: column; align-items: flex-start; }
   .em-stats-section { padding: 2rem 0 3.5rem; }
+  .em-facility-header { align-items: flex-start; flex-direction: column; }
+  .em-facility-actions { justify-content: flex-start; }
+  .em-facility-page { padding: 2rem 0 3rem; }
 }

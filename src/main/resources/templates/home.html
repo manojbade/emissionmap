@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emission Map — What toxic chemicals are released near your home?</title>
   <meta name="description" content="Enter your home address and see every industrial facility within miles that reported toxic chemical releases to the EPA. Data: EPA Toxic Release Inventory.">
+  <meta name="mapbox-token" th:content="${mapboxToken}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -47,12 +48,20 @@
 
             <form method="post" action="/lookup" class="em-search-form">
               <div class="em-search-row mb-3">
-                <input type="text"
-                       name="address"
-                       class="em-address-input"
-                       placeholder="123 Main St, Houston TX 77001"
-                       autocomplete="street-address"
-                       required />
+                <div class="em-autocomplete-field">
+                  <input type="text"
+                         id="home-address"
+                         name="address"
+                         class="em-address-input"
+                         placeholder="123 Main St, Houston TX 77001"
+                         autocomplete="off"
+                         spellcheck="false"
+                         aria-autocomplete="list"
+                         aria-expanded="false"
+                         th:value="${form != null ? form.address : ''}"
+                         required />
+                  <div id="home-address-suggestions" class="em-autocomplete-dropdown" hidden></div>
+                </div>
                 <button type="submit" class="em-btn-primary">Search</button>
               </div>
               <div class="em-search-controls">
@@ -123,6 +132,114 @@
       </p>
     </div>
   </footer>
+
+  <script>
+  (function () {
+    const token = document.querySelector('meta[name="mapbox-token"]')?.content?.trim();
+    const input = document.getElementById('home-address');
+    const dropdown = document.getElementById('home-address-suggestions');
+
+    if (!token || !input || !dropdown) return;
+
+    let debounceId = 0;
+    let requestController = null;
+
+    function clearDropdown() {
+      dropdown.innerHTML = '';
+      dropdown.hidden = true;
+      input.setAttribute('aria-expanded', 'false');
+    }
+
+    function renderSuggestions(features) {
+      if (!features.length) {
+        clearDropdown();
+        return;
+      }
+
+      dropdown.innerHTML = '';
+
+      features.forEach(function (feature) {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'em-autocomplete-option';
+
+        const title = document.createElement('span');
+        title.className = 'em-autocomplete-option-title';
+        title.textContent = feature.text || feature.place_name || '';
+
+        const subtitle = document.createElement('span');
+        subtitle.className = 'em-autocomplete-option-subtitle';
+        subtitle.textContent = feature.place_name || '';
+
+        option.appendChild(title);
+        option.appendChild(subtitle);
+        option.addEventListener('click', function () {
+          input.value = feature.place_name || '';
+          clearDropdown();
+          input.focus();
+        });
+
+        dropdown.appendChild(option);
+      });
+
+      dropdown.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+    }
+
+    async function fetchSuggestions(query) {
+      if (requestController) {
+        requestController.abort();
+      }
+
+      requestController = new AbortController();
+
+      const url = 'https://api.mapbox.com/geocoding/v5/mapbox.places/'
+        + encodeURIComponent(query)
+        + '.json?access_token=' + encodeURIComponent(token)
+        + '&country=us&types=address&limit=5';
+
+      try {
+        const response = await fetch(url, { signal: requestController.signal });
+        if (!response.ok) {
+          clearDropdown();
+          return;
+        }
+        const data = await response.json();
+        renderSuggestions(Array.isArray(data.features) ? data.features : []);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          clearDropdown();
+        }
+      }
+    }
+
+    input.addEventListener('input', function () {
+      const query = input.value.trim();
+      window.clearTimeout(debounceId);
+
+      if (query.length < 3) {
+        clearDropdown();
+        return;
+      }
+
+      debounceId = window.setTimeout(function () {
+        fetchSuggestions(query);
+      }, 300);
+    });
+
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        clearDropdown();
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.em-autocomplete-field')) {
+        clearDropdown();
+      }
+    });
+  })();
+  </script>
 
 </body>
 </html>

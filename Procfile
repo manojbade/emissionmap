@@ -1,1 +1,0 @@
-web: java -Djava.net.preferIPv6Addresses=true -jar target/emissionmap-0.0.1-SNAPSHOT.jar

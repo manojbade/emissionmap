@@ -3,6 +3,7 @@ package com.emissionmap.web.controller;
 import com.emissionmap.web.form.AddressLookupForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,14 +15,17 @@ public class HomeController {
     private static final Logger log = LoggerFactory.getLogger(HomeController.class);
 
     private final JdbcTemplate jdbc;
+    private final Environment env;
 
-    public HomeController(JdbcTemplate jdbc) {
+    public HomeController(JdbcTemplate jdbc, Environment env) {
         this.jdbc = jdbc;
+        this.env = env;
     }
 
     @GetMapping("/")
     public String home(Model model) {
         model.addAttribute("form", new AddressLookupForm());
+        model.addAttribute("mapboxToken", env.getProperty("MAPBOX_PUBLIC_TOKEN", ""));
         loadStats(model);
         return "home";
     }

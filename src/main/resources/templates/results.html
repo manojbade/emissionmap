@@ -175,6 +175,7 @@
           <!-- Card links -->
           <div class="em-card-links">
             <a th:href="${facility.echoUrl()}" target="_blank" rel="noopener">Verify on EPA ECHO ↗</a>
+            <a th:href="@{/facility/{id}(id=${facility.facilityId()})}">View details →</a>
           </div>
 
         </div><!-- end facility card -->
