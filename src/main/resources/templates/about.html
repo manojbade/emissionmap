@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About — Emission Map</title>
+  <meta name="description" content="How Emission Map works, data sources, and methodology. Data: EPA Toxic Release Inventory (TRI), EPCRA Section 313.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <header class="em-masthead">
+    <div class="container">
+      <div class="em-masthead-inner">
+        <a href="/" class="em-brand">
+          <span class="em-brand-mark">Emission Map</span>
+          <span class="em-brand-sub">EPA Toxic Release Inventory · Address Lookup</span>
+        </a>
+        <nav class="em-nav">
+          <a href="/about" class="em-nav-link">About</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="em-about">
+    <div class="container">
+      <div class="em-about-body">
+        <p class="eyebrow mb-2">Methodology</p>
+        <h1 class="em-hero-title" style="font-size: clamp(1.8rem, 3vw, 2.4rem); max-width: none;">About Emission Map</h1>
+
+        <h2>What is this tool?</h2>
+        <p>
+          Emission Map lets you enter a home address and see every industrial facility within your chosen radius
+          that reported toxic chemical releases to the EPA — including chemical names, quantities released (in pounds),
+          air/water pathways, and EPA carcinogen and PFAS classifications.
+        </p>
+        <p>
+          The data is entirely public. Federal law (EPCRA Section 313) requires ~21,000 industrial facilities
+          to disclose their toxic chemical releases each year. Emission Map makes this data searchable by address.
+        </p>
+
+        <h2>Data source</h2>
+        <p>
+          All data comes from the
+          <strong><a href="https://www.epa.gov/toxics-release-inventory-tri-program" target="_blank" rel="noopener">EPA Toxic Release Inventory (TRI) Basic Data Files</a></strong>,
+          published annually by the U.S. Environmental Protection Agency.
+          Facilities report releases by July 1 each year for the prior calendar year.
+          EPA publishes quality-checked data in November — approximately 14–16 months behind real-time.
+        </p>
+        <p>
+          <strong>Data currency:</strong> Reporting Year 2024 data was published November 2025.
+          "Reporting Year 2024" means releases that occurred during calendar year 2024.
+        </p>
+
+        <h2>What TRI covers — and what it doesn't</h2>
+        <p>TRI covers facilities that:</p>
+        <ul>
+          <li>Are in specific industrial sectors (manufacturing, federal facilities, mining, utilities, etc.)</li>
+          <li>Have 10 or more full-time employees</li>
+          <li>Manufacture, process, or otherwise use a listed TRI chemical above threshold quantities</li>
+        </ul>
+        <p>
+          <strong>Not included:</strong> smaller facilities, dry cleaners, gas stations, agricultural operations,
+          vehicle exhaust, and other non-industrial sources. A result of "no facilities found" does not mean
+          the area is clean — it means no TRI-reporting facilities are present.
+        </p>
+
+        <h2>EPA classifications: CARCINOGEN, PFAS, PBT</h2>
+        <p>
+          The CARCINOGEN, PFAS, and PBT labels shown on facility cards are
+          <strong>EPA's own classifications</strong> from the TRI dataset — not editorial determinations
+          made by this tool. These classifications appear in the EPA TRI Basic Data Files exactly as we display them.
+        </p>
+        <ul>
+          <li><strong>CARCINOGEN</strong> — EPA or IARC classified as a known or probable human carcinogen</li>
+          <li><strong>PFAS</strong> — per- and polyfluoroalkyl substance, as classified by EPA TRI</li>
+          <li><strong>PBT</strong> — persistent, bioaccumulative, and toxic chemical per EPA TRI designation</li>
+        </ul>
+
+        <h2>How proximity search works</h2>
+        <p>
+          Your address is geocoded using the
+          <a href="https://geocoding.geo.census.gov/" target="_blank" rel="noopener">Census Bureau Geocoder</a>
+          (Nominatim/OpenStreetMap as fallback). The resulting latitude/longitude is used to query a
+          <strong>PostGIS spatial database</strong> for all TRI-reporting facilities within your selected radius,
+          using a geographic distance calculation (haversine, in meters). Results are ordered by total on-site
+          release quantity, largest first.
+        </p>
+
+        <h2>What this tool does not do</h2>
+        <ul>
+          <li>We do not calculate health risk or exposure. We display EPA-reported quantities only.</li>
+          <li>We do not rank facilities as "dangerous." The data speaks for itself.</li>
+          <li>We do not add risk scores or editorial analysis beyond what EPA's own classifications say.</li>
+        </ul>
+
+        <h2>Legal and data attribution</h2>
+        <p>
+          All data displayed is sourced directly from EPA TRI Basic Data Files, which are public domain
+          federal government data. EPCRA Section 313 (1986) mandates public disclosure of this information.
+          Every facility card links to the facility's official EPA ECHO profile for verification.
+        </p>
+        <p>
+          <strong>Disclaimer:</strong> This tool displays federally reported information only.
+          It does not constitute legal advice, environmental consulting, or health guidance.
+          For official data, visit <a href="https://www.epa.gov/toxics-release-inventory-tri-program" target="_blank" rel="noopener">EPA TRI</a>
+          or <a href="https://echo.epa.gov" target="_blank" rel="noopener">EPA ECHO</a>.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="em-footer">
+    <div class="container">
+      <p>
+        Data: EPA Toxic Release Inventory, Reporting Year 2024, published November 2025.
+        All data sourced from EPA TRI Basic Data Files. This tool displays federally reported information only.
+      </p>
+      <p>
+        <a href="https://www.epa.gov/toxics-release-inventory-tri-program" target="_blank" rel="noopener">EPA TRI Program ↗</a>
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

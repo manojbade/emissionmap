@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="'Emission Map — ' + ${vm.geocodedAddress().rawInput()}">Emission Map — Results</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="em-results-page">
+
+  <!-- Nav -->
+  <header class="em-masthead">
+    <div class="container-fluid px-4">
+      <div class="em-masthead-inner">
+        <a href="/" class="em-brand">
+          <span class="em-brand-mark">Emission Map</span>
+        </a>
+        <nav class="em-nav">
+          <a href="/about" class="em-nav-link">About</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Error state — not split layout -->
+  <div class="em-results-body" th:if="${vm.hasError()}">
+    <div class="container">
+      <div class="em-alert-error" th:text="${vm.error()}"></div>
+      <a href="/" class="em-btn-primary">Try another address</a>
+    </div>
+  </div>
+
+  <!-- Results state — split layout -->
+  <th:block th:unless="${vm.hasError()}">
+
+    <!-- Results header with controls -->
+    <div class="em-results-header">
+      <div class="container-fluid px-4">
+        <form method="post" action="/lookup" id="controls-form">
+          <input type="hidden" name="address" th:value="${vm.geocodedAddress().rawInput()}" />
+          <div class="em-results-header-inner">
+
+            <div class="em-results-address">
+              <span class="eyebrow d-block">Searching near</span>
+              <strong th:text="${vm.geocodedAddress().matchedAddress() != null ? vm.geocodedAddress().matchedAddress() : vm.geocodedAddress().rawInput()}">Address</strong>
+            </div>
+
+            <div class="em-results-controls">
+              <!-- Radius -->
+              <div class="em-control-group">
+                <label class="em-control-label" for="r-radius">Radius</label>
+                <select id="r-radius" name="radius" class="em-select"
+                        onchange="document.getElementById('controls-form').submit()">
+                  <option value="1"  th:selected="${vm.radiusMiles() == 1}">1 mi</option>
+                  <option value="3"  th:selected="${vm.radiusMiles() == 3}">3 mi</option>
+                  <option value="5"  th:selected="${vm.radiusMiles() == 5}">5 mi</option>
+                  <option value="10" th:selected="${vm.radiusMiles() == 10}">10 mi</option>
+                </select>
+              </div>
+              <!-- Year -->
+              <div class="em-control-group">
+                <label class="em-control-label" for="r-year">Year</label>
+                <select id="r-year" name="year" class="em-select"
+                        onchange="document.getElementById('controls-form').submit()">
+                  <option value="2024" th:selected="${vm.year() == 2024}">2024</option>
+                  <option value="2023" th:selected="${vm.year() == 2023}">2023</option>
+                  <option value="2022" th:selected="${vm.year() == 2022}">2022</option>
+                </select>
+              </div>
+              <!-- Count -->
+              <span class="em-results-count"
+                    th:if="${vm.hasResults()}"
+                    th:text="${vm.facilities().size()} + ' facilit' + (${vm.facilities().size()} == 1 ? 'y' : 'ies')">
+              </span>
+              <span class="em-results-count" th:unless="${vm.hasResults()}">No facilities found</span>
+              <!-- Check another -->
+              <a href="/" class="em-btn-secondary">Check another address</a>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Split layout: cards (left 40%) + map (right 60%) -->
+    <main class="em-results-main">
+
+      <!-- Cards panel -->
+      <div id="em-cards-panel" class="em-cards-panel">
+
+        <!-- No results -->
+        <div class="em-no-results" th:unless="${vm.hasResults()}">
+          <h3>No TRI-reporting facilities found</h3>
+          <p>
+            No EPA Toxic Release Inventory facilities were found within
+            <strong th:text="${vm.radiusMiles()}">3</strong> miles of this address
+            for reporting year <strong th:text="${vm.year()}">2024</strong>.
+          </p>
+          <p>
+            This does not mean the area is clean. TRI covers only facilities required to report
+            under EPCRA Section 313. Smaller facilities and non-industrial sources are not included.
+          </p>
+          <a href="/" class="em-btn-secondary mt-2">Try a different address</a>
+        </div>
+
+        <!-- Facility cards -->
+        <div th:each="facility, iter : ${vm.facilities()}"
+             class="em-facility-card"
+             th:id="'card-' + ${facility.facilityId()}"
+             th:attr="data-facility-id=${facility.facilityId()}">
+
+          <div class="em-card-rank"
+               th:text="'#' + ${iter.count} + ' · ' + ${#numbers.formatDecimal(facility.distanceMiles(), 1, 2)} + ' miles away'">
+          </div>
+          <div class="em-card-name" th:text="${facility.name()}"></div>
+          <div class="em-card-parent"
+               th:if="${facility.parentCo() != null}"
+               th:text="'Parent: ' + ${facility.parentCo()}">
+          </div>
+          <div class="em-card-meta">
+            <span th:text="${facility.street() + ', ' + facility.city() + ', ' + facility.state()}"></span>
+          </div>
+
+          <!-- Total release headline -->
+          <div>
+            <span class="em-card-total"
+                  th:text="${#numbers.formatDecimal(facility.totalReleaseLbs(), 1, 'COMMA', 0, 'POINT')}">
+            </span>
+            <span class="em-card-total-unit">lbs released (RY <span th:text="${facility.year()}"></span>)</span>
+          </div>
+
+          <!-- EPA badges -->
+          <div class="em-badge-row">
+            <span th:if="${facility.hasCarcinogen()}" class="em-badge em-badge-carcinogen">Carcinogen</span>
+            <span th:if="${facility.hasPfas()}"       class="em-badge em-badge-pfas">PFAS</span>
+            <span th:if="${facility.hasPbt()}"        class="em-badge em-badge-pbt">PBT</span>
+            <span th:if="${facility.hasCarcinogen() or facility.hasPfas() or facility.hasPbt()}"
+                  class="em-badge-note">— EPA classifications</span>
+          </div>
+
+          <!-- Chemical breakdown table (top 10) -->
+          <table class="em-chem-table" th:if="${!facility.chemicals().isEmpty()}">
+            <thead>
+              <tr>
+                <th>Chemical</th>
+                <th class="em-chem-lbs">Total (lbs)</th>
+                <th>Pathway</th>
+                <th>EPA Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="chem, ci : ${facility.chemicals()}" th:if="${ci.index < 10}">
+                <td class="em-chem-name" th:text="${chem.chemical()}"></td>
+                <td class="em-chem-lbs" th:text="${#numbers.formatDecimal(chem.onSiteTotal(), 1, 'COMMA', 0, 'POINT')}"></td>
+                <td th:text="${chem.primaryPathway()}"></td>
+                <td>
+                  <span th:if="${chem.carcinogen()}" class="em-badge em-badge-carcinogen" style="font-size:0.6rem;padding:1px 5px;">C</span>
+                  <span th:if="${chem.pfas()}"       class="em-badge em-badge-pfas"       style="font-size:0.6rem;padding:1px 5px;">P</span>
+                  <span th:if="${chem.pbt()}"        class="em-badge em-badge-pbt"        style="font-size:0.6rem;padding:1px 5px;">PBT</span>
+                </td>
+              </tr>
+              <tr th:if="${facility.chemicals().size() > 10}">
+                <td colspan="4" class="em-chem-more"
+                    th:text="'+ ' + (${facility.chemicals().size() - 10}) + ' more chemicals'">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Card links -->
+          <div class="em-card-links">
+            <a th:href="${facility.echoUrl()}" target="_blank" rel="noopener">Verify on EPA ECHO ↗</a>
+          </div>
+
+        </div><!-- end facility card -->
+
+        <!-- Feedback form -->
+        <form th:if="${vm.hasResults()}" method="post" action="/feedback" class="em-feedback">
+          <input type="hidden" name="page" value="results" />
+          <h6>Was this result helpful?</h6>
+          <div class="em-feedback-btns">
+            <button type="submit" name="helpful" value="true"  class="em-feedback-btn">👍 Yes</button>
+            <button type="submit" name="helpful" value="false" class="em-feedback-btn">👎 No</button>
+          </div>
+          <textarea name="comment" class="em-feedback-textarea" rows="2"
+                    placeholder="What were you looking for? (optional)" maxlength="500"></textarea>
+          <br>
+          <button type="submit" class="em-feedback-submit">Submit feedback</button>
+        </form>
+
+        <!-- Data footer -->
+        <div class="em-data-footer">
+          Data: EPA Toxic Release Inventory, Reporting Year <span th:text="${vm.year()}">2024</span>,
+          published November 2025. All data sourced from EPA TRI Basic Data Files.
+          CARCINOGEN / PFAS / PBT are EPA classifications, not editorial determinations.
+        </div>
+
+      </div><!-- end cards panel -->
+
+      <!-- Map panel -->
+      <div class="em-map-panel">
+        <div id="em-map"></div>
+      </div>
+
+    </main><!-- end split layout -->
+
+  </th:block>
+
+  <!-- Data for map JS — type=application/json so browser ignores it -->
+  <script id="facility-data" type="application/json" th:utext="${facilitiesJson}">[]</script>
+  <script id="map-center" type="application/json" th:utext="${mapCenterJson}">{}</script>
+  <script id="map-config" type="application/json"
+          th:utext="'{&quot;radiusMiles&quot;:' + ${vm.radiusMiles()} + '}'">
+  </script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
+
+  <script th:if="${!vm.hasError() and vm.geocodedAddress().lat() != 0}">
+  (function () {
+    const facilities = JSON.parse(document.getElementById('facility-data').textContent || '[]');
+    const center     = JSON.parse(document.getElementById('map-center').textContent   || '{}');
+    const config     = JSON.parse(document.getElementById('map-config').textContent   || '{}');
+    const radiusMeters = (config.radiusMiles || 3) * 1609.344;
+
+    if (!center.lat || !center.lng) return;
+
+    // Init map
+    const map = L.map('em-map', { zoomControl: true }).setView([center.lat, center.lng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Home pin (blue)
+    const homeIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:14px;height:14px;background:#1f7ec4;border:2.5px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+    L.marker([center.lat, center.lng], { icon: homeIcon, zIndexOffset: 1000 })
+      .bindPopup('<div class="em-popup"><strong>Your address</strong></div>')
+      .addTo(map);
+
+    // Radius circle
+    L.circle([center.lat, center.lng], {
+      radius: radiusMeters,
+      color: '#1f252a',
+      weight: 1.5,
+      dashArray: '6 4',
+      fillColor: '#1f252a',
+      fillOpacity: 0.04
+    }).addTo(map);
+
+    // Facility markers
+    const markers = {};
+
+    function formatLbs(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000)    return Math.round(n / 1000) + 'K';
+      return Math.round(n).toLocaleString();
+    }
+
+    facilities.forEach(function (f) {
+      const color = f.carcinogen ? '#c00' : f.pfas ? '#e65c00' : '#5f6b77';
+      const marker = L.circleMarker([f.lat, f.lng], {
+        radius: 7,
+        color: color,
+        weight: 2,
+        fillColor: color,
+        fillOpacity: 0.7
+      });
+
+      marker.bindPopup(
+        '<div class="em-popup">' +
+        '<strong>' + escHtml(f.name) + '</strong>' +
+        '<span class="em-popup-lbs">' + formatLbs(f.totalLbs) + ' lbs released</span>' +
+        '<a href="#card-' + f.id + '" class="em-scroll-to-card" data-facility-id="' + f.id + '">See details ↓</a>' +
+        '</div>'
+      );
+
+      marker.on('click', function () { highlightCard(f.id); });
+      markers[f.id] = marker;
+      marker.addTo(map);
+    });
+
+    // Card click → open marker popup
+    document.querySelectorAll('.em-facility-card').forEach(function (card) {
+      card.addEventListener('click', function (ev) {
+        if (ev.target.tagName === 'A' || ev.target.tagName === 'BUTTON') return;
+        const id = card.dataset.facilityId;
+        if (!id) return;
+        highlightCard(id);
+        if (markers[id]) {
+          markers[id].openPopup();
+          map.panTo(markers[id].getLatLng(), { animate: true });
+        }
+      });
+    });
+
+    // Popup "See details" scroll link via event delegation
+    document.getElementById('em-map').addEventListener('click', function (ev) {
+      const link = ev.target.closest('.em-scroll-to-card');
+      if (!link) return;
+      ev.preventDefault();
+      highlightCard(link.dataset.facilityId);
+    });
+
+    function highlightCard(id) {
+      document.querySelectorAll('.em-facility-card').forEach(function (c) {
+        c.classList.remove('em-card-active');
+      });
+      const card = document.getElementById('card-' + id);
+      if (!card) return;
+      card.classList.add('em-card-active');
+      const panel = document.getElementById('em-cards-panel');
+      if (panel) {
+        panel.scrollTo({ top: card.offsetTop - panel.offsetTop - 12, behavior: 'smooth' });
+      }
+    }
+
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Fit map to show all markers
+    if (facilities.length > 0) {
+      const bounds = L.latLngBounds([[center.lat, center.lng]]);
+      facilities.forEach(function (f) { bounds.extend([f.lat, f.lng]); });
+      map.fitBounds(bounds, { padding: [32, 32], maxZoom: 14 });
+    }
+  })();
+  </script>
+
+</body>
+</html>

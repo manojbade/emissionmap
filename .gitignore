@@ -1,0 +1,35 @@
+# Maven
+target/
+*.class
+
+# Data files — TRI CSVs are too large for git (2.4GB total)
+data/
+*.csv
+*.csv.gz
+
+# H2 database files (dev profile)
+*.mv.db
+*.trace.db
+
+# Local development docs
+_docs/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Spring Boot
+spring-shell.log
+
+# Local dev profiles (contain machine-specific paths)
+src/main/resources/application-devpg.properties
