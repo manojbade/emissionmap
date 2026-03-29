@@ -1,4 +1,4 @@
 [deploy]
-startCommand = "java -Djava.net.preferIPv6Addresses=true -jar target/emissionmap-0.0.1-SNAPSHOT.jar"
+startCommand = "java -jar target/emissionmap-0.0.1-SNAPSHOT.jar"
 healthcheckPath = "/actuator/health"
 healthcheckTimeout = 120
