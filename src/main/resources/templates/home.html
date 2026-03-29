@@ -47,7 +47,7 @@
             </p>
 
             <form method="post" action="/lookup" class="em-search-form">
-              <div class="em-search-row mb-3">
+              <div class="em-search-primary mb-3">
                 <div class="em-autocomplete-field">
                   <input type="text"
                          id="home-address"
@@ -62,7 +62,7 @@
                          required />
                   <div id="home-address-suggestions" class="em-autocomplete-dropdown" hidden></div>
                 </div>
-                <button type="submit" class="em-btn-primary">Search</button>
+                <button type="submit" class="em-btn-primary em-search-submit">Search</button>
               </div>
               <div class="em-search-controls">
                 <div class="em-control-group">
@@ -92,24 +92,18 @@
     <!-- National stats -->
     <section class="em-stats-section" th:if="${totalFacilities != null and totalFacilities > 0}">
       <div class="container">
-        <div class="row g-4 justify-content-center">
-          <div class="col-sm-6 col-md-4">
-            <div class="em-stat-card">
-              <div class="em-stat-number" th:text="${#numbers.formatInteger(totalFacilities, 0, 'COMMA')}">21,000</div>
-              <div class="em-stat-label">Facilities reported toxic releases in 2024</div>
-            </div>
+        <div class="em-stats-grid">
+          <div class="em-stat-card">
+            <div class="em-stat-number" th:text="${#numbers.formatInteger(totalFacilities, 0, 'COMMA')}">21,000</div>
+            <div class="em-stat-label">Facilities reported toxic releases in 2024</div>
           </div>
-          <div class="col-sm-6 col-md-4">
-            <div class="em-stat-card">
-              <div class="em-stat-number" th:text="${totalReleaseBillionsFormatted}">3.1B</div>
-              <div class="em-stat-label">Pounds released on-site nationally (2024)</div>
-            </div>
+          <div class="em-stat-card">
+            <div class="em-stat-number" th:text="${totalReleaseBillionsFormatted}">3.1B</div>
+            <div class="em-stat-label">Pounds released on-site nationally (2024)</div>
           </div>
-          <div class="col-sm-6 col-md-4">
-            <div class="em-stat-card">
-              <div class="em-stat-number" th:text="${#numbers.formatInteger(carcinogenFacilities, 0, 'COMMA')}">9,000</div>
-              <div class="em-stat-label">Reported at least one EPA-classified carcinogen</div>
-            </div>
+          <div class="em-stat-card">
+            <div class="em-stat-number" th:text="${#numbers.formatInteger(carcinogenFacilities, 0, 'COMMA')}">9,000</div>
+            <div class="em-stat-label">Reported at least one EPA-classified carcinogen</div>
           </div>
         </div>
         <p class="text-center mt-4" style="font-size:0.8rem; color:var(--em-muted);">

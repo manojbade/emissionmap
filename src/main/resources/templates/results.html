@@ -219,128 +219,146 @@
           th:utext="'{&quot;radiusMiles&quot;:' + ${vm.radiusMiles()} + '}'">
   </script>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
   <script th:if="${!vm.hasError() and vm.geocodedAddress().lat() != 0}">
-  (function () {
-    const facilities = JSON.parse(document.getElementById('facility-data').textContent || '[]');
-    const center     = JSON.parse(document.getElementById('map-center').textContent   || '{}');
-    const config     = JSON.parse(document.getElementById('map-config').textContent   || '{}');
-    const radiusMeters = (config.radiusMiles || 3) * 1609.344;
+  function initEmissionMap() {
+    try {
+      const facilities = JSON.parse(document.getElementById('facility-data').textContent || '[]');
+      const center = JSON.parse(document.getElementById('map-center').textContent || '{}');
+      const config = JSON.parse(document.getElementById('map-config').textContent || '{}');
+      const radiusMeters = (config.radiusMiles || 3) * 1609.344;
+      const mapElement = document.getElementById('em-map');
 
-    if (!center.lat || !center.lng) return;
-
-    // Init map
-    const map = L.map('em-map', { zoomControl: true }).setView([center.lat, center.lng], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19
-    }).addTo(map);
-
-    // Home pin (blue)
-    const homeIcon = L.divIcon({
-      className: '',
-      html: '<div style="width:14px;height:14px;background:#1f7ec4;border:2.5px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
-      iconSize: [14, 14],
-      iconAnchor: [7, 7]
-    });
-    L.marker([center.lat, center.lng], { icon: homeIcon, zIndexOffset: 1000 })
-      .bindPopup('<div class="em-popup"><strong>Your address</strong></div>')
-      .addTo(map);
-
-    // Radius circle
-    L.circle([center.lat, center.lng], {
-      radius: radiusMeters,
-      color: '#1f252a',
-      weight: 1.5,
-      dashArray: '6 4',
-      fillColor: '#1f252a',
-      fillOpacity: 0.04
-    }).addTo(map);
-
-    // Facility markers
-    const markers = {};
-
-    function formatLbs(n) {
-      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-      if (n >= 1000)    return Math.round(n / 1000) + 'K';
-      return Math.round(n).toLocaleString();
-    }
-
-    facilities.forEach(function (f) {
-      const color = f.carcinogen ? '#c00' : f.pfas ? '#e65c00' : '#5f6b77';
-      const marker = L.circleMarker([f.lat, f.lng], {
-        radius: 7,
-        color: color,
-        weight: 2,
-        fillColor: color,
-        fillOpacity: 0.7
-      });
-
-      marker.bindPopup(
-        '<div class="em-popup">' +
-        '<strong>' + escHtml(f.name) + '</strong>' +
-        '<span class="em-popup-lbs">' + formatLbs(f.totalLbs) + ' lbs released</span>' +
-        '<a href="#card-' + f.id + '" class="em-scroll-to-card" data-facility-id="' + f.id + '">See details ↓</a>' +
-        '</div>'
-      );
-
-      marker.on('click', function () { highlightCard(f.id); });
-      markers[f.id] = marker;
-      marker.addTo(map);
-    });
-
-    // Card click → open marker popup
-    document.querySelectorAll('.em-facility-card').forEach(function (card) {
-      card.addEventListener('click', function (ev) {
-        if (ev.target.tagName === 'A' || ev.target.tagName === 'BUTTON') return;
-        const id = card.dataset.facilityId;
-        if (!id) return;
-        highlightCard(id);
-        if (markers[id]) {
-          markers[id].openPopup();
-          map.panTo(markers[id].getLatLng(), { animate: true });
-        }
-      });
-    });
-
-    // Popup "See details" scroll link via event delegation
-    document.getElementById('em-map').addEventListener('click', function (ev) {
-      const link = ev.target.closest('.em-scroll-to-card');
-      if (!link) return;
-      ev.preventDefault();
-      highlightCard(link.dataset.facilityId);
-    });
-
-    function highlightCard(id) {
-      document.querySelectorAll('.em-facility-card').forEach(function (c) {
-        c.classList.remove('em-card-active');
-      });
-      const card = document.getElementById('card-' + id);
-      if (!card) return;
-      card.classList.add('em-card-active');
-      const panel = document.getElementById('em-cards-panel');
-      if (panel) {
-        panel.scrollTo({ top: card.offsetTop - panel.offsetTop - 12, behavior: 'smooth' });
+      if (!mapElement || !center.lat || !center.lng) {
+        console.warn('Emission Map: results map skipped because center coordinates or container are missing.', {
+          hasElement: !!mapElement,
+          center: center
+        });
+        return;
       }
-    }
 
-    function escHtml(s) {
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
+      const map = L.map(mapElement, { zoomControl: true }).setView([center.lat, center.lng], 13);
 
-    // Fit map to show all markers
-    if (facilities.length > 0) {
-      const bounds = L.latLngBounds([[center.lat, center.lng]]);
-      facilities.forEach(function (f) { bounds.extend([f.lat, f.lng]); });
-      map.fitBounds(bounds, { padding: [32, 32], maxZoom: 14 });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(map);
+
+      const homeIcon = L.divIcon({
+        className: '',
+        html: '<div style="width:14px;height:14px;background:#1f7ec4;border:2.5px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+      });
+
+      L.marker([center.lat, center.lng], { icon: homeIcon, zIndexOffset: 1000 })
+        .bindPopup('<div class="em-popup"><strong>Your address</strong></div>')
+        .addTo(map);
+
+      L.circle([center.lat, center.lng], {
+        radius: radiusMeters,
+        color: '#1f252a',
+        weight: 1.5,
+        dashArray: '6 4',
+        fillColor: '#1f252a',
+        fillOpacity: 0.04
+      }).addTo(map);
+
+      const markers = {};
+
+      function formatLbs(n) {
+        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return Math.round(n / 1000) + 'K';
+        return Math.round(n).toLocaleString();
+      }
+
+      function escHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function highlightCard(id) {
+        document.querySelectorAll('.em-facility-card').forEach(function (c) {
+          c.classList.remove('em-card-active');
+        });
+        const card = document.getElementById('card-' + id);
+        if (!card) return;
+        card.classList.add('em-card-active');
+        const panel = document.getElementById('em-cards-panel');
+        if (panel) {
+          panel.scrollTo({ top: card.offsetTop - panel.offsetTop - 12, behavior: 'smooth' });
+        }
+      }
+
+      facilities.forEach(function (f) {
+        const color = f.carcinogen ? '#c00' : f.pfas ? '#e65c00' : '#5f6b77';
+        const marker = L.circleMarker([f.lat, f.lng], {
+          radius: 7,
+          color: color,
+          weight: 2,
+          fillColor: color,
+          fillOpacity: 0.7
+        });
+
+        marker.bindPopup(
+          '<div class="em-popup">' +
+          '<strong>' + escHtml(f.name) + '</strong>' +
+          '<span class="em-popup-lbs">' + formatLbs(f.totalLbs) + ' lbs released</span>' +
+          '<a href="#card-' + f.id + '" class="em-scroll-to-card" data-facility-id="' + f.id + '">See details ↓</a>' +
+          '</div>'
+        );
+
+        marker.on('click', function () { highlightCard(f.id); });
+        markers[f.id] = marker;
+        marker.addTo(map);
+      });
+
+      document.querySelectorAll('.em-facility-card').forEach(function (card) {
+        card.addEventListener('click', function (ev) {
+          if (ev.target.tagName === 'A' || ev.target.tagName === 'BUTTON') return;
+          const id = card.dataset.facilityId;
+          if (!id) return;
+          highlightCard(id);
+          if (markers[id]) {
+            markers[id].openPopup();
+            map.panTo(markers[id].getLatLng(), { animate: true });
+          }
+        });
+      });
+
+      mapElement.addEventListener('click', function (ev) {
+        const link = ev.target.closest('.em-scroll-to-card');
+        if (!link) return;
+        ev.preventDefault();
+        highlightCard(link.dataset.facilityId);
+      });
+
+      if (facilities.length > 0) {
+        const bounds = L.latLngBounds([L.latLng(center.lat, center.lng)]);
+        facilities.forEach(function (f) { bounds.extend([f.lat, f.lng]); });
+        map.fitBounds(bounds, { padding: [32, 32], maxZoom: 14 });
+      }
+
+      window.requestAnimationFrame(function () {
+        map.invalidateSize();
+      });
+      window.addEventListener('resize', function () {
+        map.invalidateSize();
+      });
+    } catch (error) {
+      console.error('Emission Map: failed to initialize results map.', error);
     }
-  })();
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', initEmissionMap, { once: true });
+  } else {
+    initEmissionMap();
+  }
   </script>
 
 </body>
