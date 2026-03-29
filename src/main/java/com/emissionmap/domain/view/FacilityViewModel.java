@@ -23,6 +23,10 @@ public record FacilityViewModel(
         List<FacilityTableRow> tableRows,
         String error
 ) {
+    public String facilityName() {
+        return name;
+    }
+
     public boolean hasError() {
         return error != null && !error.isBlank();
     }
@@ -40,6 +44,28 @@ public record FacilityViewModel(
 
     public String echoUrl() {
         return "https://echo.epa.gov/detailed-facility-report?fid=" + facilityId;
+    }
+
+    public String metaDescription() {
+        String facilityName = facilityName();
+        if (facilityName == null || facilityName.isBlank()) {
+            return "EPA Toxic Release Inventory facility detail data on Emission Map.";
+        }
+
+        String locality = Stream.of(city, state)
+                .filter(Objects::nonNull)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.joining(", "));
+
+        if (locality.isBlank()) {
+            return facilityName + " — EPA Toxic Release Inventory data including total releases, chemical breakdown, and year-over-year trends.";
+        }
+
+        return facilityName + " in " + locality + " — EPA Toxic Release Inventory data including total releases, chemical breakdown, and year-over-year trends.";
+    }
+
+    public String canonicalUrl() {
+        return "https://emissionmap.com/facility/" + facilityId;
     }
 
     public static FacilityViewModel error(String facilityId, String message) {

@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title th:text="'Emission Map — ' + ${vm.geocodedAddress().rawInput()}">Emission Map — Results</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1BDMGKLVE7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1BDMGKLVE7');
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -120,6 +127,15 @@
       <!-- Cards panel -->
       <div id="em-cards-panel" class="em-cards-panel">
 
+        <div class="em-sort-toolbar" th:if="${vm.hasResults()}">
+          <span class="em-sort-label">Sort</span>
+          <div class="em-sort-buttons" role="group" aria-label="Sort facility cards">
+            <button type="button" class="em-sort-btn em-sort-btn-active" data-sort-mode="nearest">Nearest first</button>
+            <button type="button" class="em-sort-btn" data-sort-mode="releases">Most releases</button>
+            <button type="button" class="em-sort-btn" data-sort-mode="carcinogens">Carcinogens first</button>
+          </div>
+        </div>
+
         <!-- No results -->
         <div class="em-no-results" th:unless="${vm.hasResults()}">
           <h3>No TRI-reporting facilities found</h3>
@@ -136,76 +152,78 @@
         </div>
 
         <!-- Facility cards -->
-        <div th:each="facility, iter : ${vm.facilities()}"
-             class="em-facility-card"
-             th:id="'card-' + ${facility.facilityId()}"
-             th:attr="data-facility-id=${facility.facilityId()}">
+        <div id="em-facility-list" th:if="${vm.hasResults()}">
+          <div th:each="facility, iter : ${vm.facilities()}"
+               class="em-facility-card"
+               th:id="'card-' + ${facility.facilityId()}"
+               th:attr="data-facility-id=${facility.facilityId()},data-distance=${facility.distanceMiles()},data-total-releases=${facility.totalReleaseLbs()},data-has-carcinogen=${facility.hasCarcinogen()},data-original-index=${iter.index}">
 
-          <div class="em-card-rank"
-               th:text="'#' + ${iter.count} + ' · ' + ${#numbers.formatDecimal(facility.distanceMiles(), 1, 2)} + ' miles away'">
-          </div>
-          <div class="em-card-name" th:text="${facility.name()}"></div>
-          <div class="em-card-parent"
-               th:if="${facility.parentCo() != null}"
-               th:text="'Parent: ' + ${facility.parentCo()}">
-          </div>
-          <div class="em-card-meta">
-            <span th:text="${facility.street() + ', ' + facility.city() + ', ' + facility.state()}"></span>
-          </div>
+            <div class="em-card-rank"
+                 th:text="'#' + ${iter.count} + ' · ' + ${#numbers.formatDecimal(facility.distanceMiles(), 1, 'COMMA', 1, 'POINT')} + ' miles away'">
+            </div>
+            <div class="em-card-name" th:text="${facility.name()}"></div>
+            <div class="em-card-parent"
+                 th:if="${facility.parentCo() != null}"
+                 th:text="'Parent: ' + ${facility.parentCo()}">
+            </div>
+            <div class="em-card-meta">
+              <span th:text="${facility.street() + ', ' + facility.city() + ', ' + facility.state()}"></span>
+            </div>
 
-          <!-- Total release headline -->
-          <div>
-            <span class="em-card-total"
-                  th:text="${#numbers.formatDecimal(facility.totalReleaseLbs(), 1, 'COMMA', 0, 'POINT')}">
-            </span>
-            <span class="em-card-total-unit">lbs released (RY <span th:text="${facility.year()}"></span>)</span>
-          </div>
+            <!-- Total release headline -->
+            <div>
+              <span class="em-card-total"
+                    th:text="${#numbers.formatDecimal(facility.totalReleaseLbs(), 1, 'COMMA', 0, 'POINT')}">
+              </span>
+              <span class="em-card-total-unit">lbs released (RY <span th:text="${facility.year()}"></span>)</span>
+            </div>
 
-          <!-- EPA badges -->
-          <div class="em-badge-row">
-            <span th:if="${facility.hasCarcinogen()}" class="em-badge em-badge-carcinogen">Carcinogen</span>
-            <span th:if="${facility.hasPfas()}"       class="em-badge em-badge-pfas">PFAS</span>
-            <span th:if="${facility.hasPbt()}"        class="em-badge em-badge-pbt">PBT</span>
-            <span th:if="${facility.hasCarcinogen() or facility.hasPfas() or facility.hasPbt()}"
-                  class="em-badge-note">— EPA classifications</span>
-          </div>
+            <!-- EPA badges -->
+            <div class="em-badge-row">
+              <span th:if="${facility.hasCarcinogen()}" class="em-badge em-badge-carcinogen">Carcinogen</span>
+              <span th:if="${facility.hasPfas()}"       class="em-badge em-badge-pfas">PFAS</span>
+              <span th:if="${facility.hasPbt()}"        class="em-badge em-badge-pbt">PBT</span>
+              <span th:if="${facility.hasCarcinogen() or facility.hasPfas() or facility.hasPbt()}"
+                    class="em-badge-note">— EPA classifications</span>
+            </div>
 
-          <!-- Chemical breakdown table (top 10) -->
-          <table class="em-chem-table" th:if="${!facility.chemicals().isEmpty()}">
-            <thead>
-              <tr>
-                <th>Chemical</th>
-                <th class="em-chem-lbs">Total (lbs)</th>
-                <th>Pathway</th>
-                <th>EPA Flags</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="chem, ci : ${facility.chemicals()}" th:if="${ci.index < 10}">
-                <td class="em-chem-name" th:text="${chem.chemical()}"></td>
-                <td class="em-chem-lbs" th:text="${#numbers.formatDecimal(chem.onSiteTotal(), 1, 'COMMA', 0, 'POINT')}"></td>
-                <td th:text="${chem.primaryPathway()}"></td>
-                <td>
-                  <span th:if="${chem.carcinogen()}" class="em-badge em-badge-carcinogen" style="font-size:0.6rem;padding:1px 5px;">C</span>
-                  <span th:if="${chem.pfas()}"       class="em-badge em-badge-pfas"       style="font-size:0.6rem;padding:1px 5px;">P</span>
-                  <span th:if="${chem.pbt()}"        class="em-badge em-badge-pbt"        style="font-size:0.6rem;padding:1px 5px;">PBT</span>
-                </td>
-              </tr>
-              <tr th:if="${facility.chemicals().size() > 10}">
-                <td colspan="4" class="em-chem-more"
-                    th:text="'+ ' + (${facility.chemicals().size() - 10}) + ' more chemicals'">
-                </td>
-              </tr>
-            </tbody>
-          </table>
+            <!-- Chemical breakdown table (top 10) -->
+            <table class="em-chem-table" th:if="${!facility.chemicals().isEmpty()}">
+              <thead>
+                <tr>
+                  <th>Chemical</th>
+                  <th class="em-chem-lbs">Total (lbs)</th>
+                  <th>Pathway</th>
+                  <th>EPA Flags</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="chem, ci : ${facility.chemicals()}" th:if="${ci.index < 10}">
+                  <td class="em-chem-name" th:text="${chem.chemical()}"></td>
+                  <td class="em-chem-lbs" th:text="${#numbers.formatDecimal(chem.onSiteTotal(), 1, 'COMMA', 0, 'POINT')}"></td>
+                  <td th:text="${chem.primaryPathway()}"></td>
+                  <td>
+                    <span th:if="${chem.carcinogen()}" class="em-badge em-badge-carcinogen" style="font-size:0.6rem;padding:1px 5px;">C</span>
+                    <span th:if="${chem.pfas()}"       class="em-badge em-badge-pfas"       style="font-size:0.6rem;padding:1px 5px;">P</span>
+                    <span th:if="${chem.pbt()}"        class="em-badge em-badge-pbt"        style="font-size:0.6rem;padding:1px 5px;">PBT</span>
+                  </td>
+                </tr>
+                <tr th:if="${facility.chemicals().size() > 10}">
+                  <td colspan="4" class="em-chem-more"
+                      th:text="'+ ' + (${facility.chemicals().size() - 10}) + ' more chemicals'">
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-          <!-- Card links -->
-          <div class="em-card-links">
-            <a th:href="${facility.echoUrl()}" target="_blank" rel="noopener">Verify on EPA ECHO ↗</a>
-            <a th:href="@{/facility/{id}(id=${facility.facilityId()})}" target="_blank" rel="noopener">View details →</a>
-          </div>
+            <!-- Card links -->
+            <div class="em-card-links">
+              <a th:href="${facility.echoUrl()}" target="_blank" rel="noopener">Verify on EPA ECHO ↗</a>
+              <a th:href="@{/facility/{id}(id=${facility.facilityId()})}" target="_blank" rel="noopener">View details →</a>
+            </div>
 
-        </div><!-- end facility card -->
+          </div><!-- end facility card -->
+        </div>
 
         <!-- Data footer -->
         <div class="em-data-footer">
@@ -372,6 +390,82 @@
   } else {
     initEmissionMap();
   }
+  </script>
+
+  <script>
+  (function () {
+    const list = document.getElementById('em-facility-list');
+    const buttons = Array.from(document.querySelectorAll('[data-sort-mode]'));
+
+    if (!list || !buttons.length) return;
+
+    const cards = Array.from(list.querySelectorAll('.em-facility-card'));
+
+    function numberValue(card, key) {
+      return Number(card.dataset[key] || 0);
+    }
+
+    function boolValue(card, key) {
+      return String(card.dataset[key]).toLowerCase() === 'true';
+    }
+
+    function distanceLabel(distance) {
+      return Number(distance).toLocaleString(undefined, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function updateRanks() {
+      Array.from(list.querySelectorAll('.em-facility-card')).forEach(function (card, index) {
+        const rank = card.querySelector('.em-card-rank');
+        if (!rank) return;
+        rank.textContent = '#' + (index + 1) + ' · ' + distanceLabel(numberValue(card, 'distance')) + ' miles away';
+      });
+    }
+
+    function sortCards(mode) {
+      const sorted = cards.slice().sort(function (a, b) {
+        if (mode === 'releases') {
+          const totalDiff = numberValue(b, 'totalReleases') - numberValue(a, 'totalReleases');
+          if (totalDiff !== 0) return totalDiff;
+          return numberValue(a, 'distance') - numberValue(b, 'distance');
+        }
+
+        if (mode === 'carcinogens') {
+          const carcinogenDiff = Number(boolValue(b, 'hasCarcinogen')) - Number(boolValue(a, 'hasCarcinogen'));
+          if (carcinogenDiff !== 0) return carcinogenDiff;
+          const totalDiff = numberValue(b, 'totalReleases') - numberValue(a, 'totalReleases');
+          if (totalDiff !== 0) return totalDiff;
+          return numberValue(a, 'distance') - numberValue(b, 'distance');
+        }
+
+        const nearestDiff = numberValue(a, 'distance') - numberValue(b, 'distance');
+        if (nearestDiff !== 0) return nearestDiff;
+        return numberValue(a, 'originalIndex') - numberValue(b, 'originalIndex');
+      });
+
+      sorted.forEach(function (card) {
+        list.appendChild(card);
+      });
+
+      buttons.forEach(function (button) {
+        const active = button.dataset.sortMode === mode;
+        button.classList.toggle('em-sort-btn-active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+
+      updateRanks();
+    }
+
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        sortCards(button.dataset.sortMode || 'nearest');
+      });
+    });
+
+    sortCards('nearest');
+  })();
   </script>
 
   <script>

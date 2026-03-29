@@ -3,7 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title th:text="'Emission Map — ' + ${vm.name()}">Emission Map — Facility Detail</title>
+  <title th:text="${vm.facilityName()} + ' — EPA TRI Emissions | Emission Map'">Facility — Emission Map</title>
+  <meta name="description" th:content="${vm.metaDescription()}">
+  <link rel="canonical" th:href="${vm.canonicalUrl()}">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1BDMGKLVE7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1BDMGKLVE7');
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
