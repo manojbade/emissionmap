@@ -1,0 +1,2 @@
+[start]
+cmd = "java -Djava.net.preferIPv6Addresses=true -jar /app/target/emissionmap-0.0.1-SNAPSHOT.jar"
