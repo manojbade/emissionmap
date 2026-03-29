@@ -55,9 +55,9 @@
       <version>1.14.1</version>
     </dependency>
     <dependency>
-      <groupId>com.giffing.bucket4j.spring.boot.starter</groupId>
-      <artifactId>bucket4j-spring-boot-starter</artifactId>
-      <version>0.13.0</version>
+      <groupId>com.bucket4j</groupId>
+      <artifactId>bucket4j_jdk17-core</artifactId>
+      <version>8.15.0</version>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
