@@ -1,5 +1,6 @@
 package com.emissionmap.service;
 
+import com.emissionmap.config.AppProperties;
 import com.emissionmap.domain.model.ChemicalRelease;
 import com.emissionmap.domain.model.FacilityResult;
 import com.emissionmap.domain.model.GeocodedAddress;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @Service
 public class EmissionLookupService {
@@ -25,10 +27,14 @@ public class EmissionLookupService {
 
     private final JdbcTemplate jdbc;
     private final GeocodingService geocodingService;
+    private final AppProperties.Lookup lookupProperties;
 
-    public EmissionLookupService(JdbcTemplate jdbc, GeocodingService geocodingService) {
+    public EmissionLookupService(JdbcTemplate jdbc,
+                                 GeocodingService geocodingService,
+                                 AppProperties appProperties) {
         this.jdbc = jdbc;
         this.geocodingService = geocodingService;
+        this.lookupProperties = appProperties.getLookup();
     }
 
     public List<FacilityResult> lookup(String address, int radiusMiles, int year) {
@@ -38,8 +44,19 @@ public class EmissionLookupService {
 
     public List<FacilityResult> lookupByCoords(GeocodedAddress geo, int radiusMiles, int year) {
         double radiusMeters = radiusMiles * METERS_PER_MILE;
+        List<String> excludedFacilityIds = lookupProperties.getExcludedFacilityIds().stream()
+                .filter(id -> id != null && !id.isBlank())
+                .toList();
 
         // Step 1: find facilities within radius
+        String exclusionClause = "";
+        if (!excludedFacilityIds.isEmpty()) {
+            String placeholders = excludedFacilityIds.stream()
+                    .map(ignored -> "?")
+                    .collect(Collectors.joining(", "));
+            exclusionClause = "\n  AND f.facility_id NOT IN (" + placeholders + ")";
+        }
+
         String facilitySql = """
                 SELECT f.facility_id,
                        f.name,
@@ -59,11 +76,20 @@ public class EmissionLookupService {
                     ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
                     ?
                 )
+                %s
                 ORDER BY dist_meters ASC
-                """;
+                """.formatted(exclusionClause);
 
         record FacilityRow(String id, String name, String parentCo, String street, String city,
                            String state, double lat, double lng, double distMeters) {}
+
+        List<Object> facilityParams = new ArrayList<>();
+        facilityParams.add(geo.lng());
+        facilityParams.add(geo.lat());
+        facilityParams.add(geo.lng());
+        facilityParams.add(geo.lat());
+        facilityParams.add(radiusMeters);
+        facilityParams.addAll(excludedFacilityIds);
 
         List<FacilityRow> facilityRows = jdbc.query(facilitySql,
                 (rs, i) -> new FacilityRow(
@@ -77,7 +103,7 @@ public class EmissionLookupService {
                         rs.getDouble("lng"),
                         rs.getDouble("dist_meters")
                 ),
-                geo.lng(), geo.lat(), geo.lng(), geo.lat(), radiusMeters
+                facilityParams.toArray()
         );
 
         if (facilityRows.isEmpty()) return List.of();

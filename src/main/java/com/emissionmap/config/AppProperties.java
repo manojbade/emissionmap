@@ -60,6 +60,7 @@ public class AppProperties {
         private int defaultRadiusMiles = 3;
         private int maxRadiusMiles = 10;
         private int defaultYear = 2024;
+        private List<String> excludedFacilityIds = List.of();
 
         public int getDefaultRadiusMiles() { return defaultRadiusMiles; }
         public void setDefaultRadiusMiles(int v) { this.defaultRadiusMiles = v; }
@@ -67,5 +68,9 @@ public class AppProperties {
         public void setMaxRadiusMiles(int v) { this.maxRadiusMiles = v; }
         public int getDefaultYear() { return defaultYear; }
         public void setDefaultYear(int v) { this.defaultYear = v; }
+        public List<String> getExcludedFacilityIds() { return excludedFacilityIds; }
+        public void setExcludedFacilityIds(List<String> excludedFacilityIds) {
+            this.excludedFacilityIds = excludedFacilityIds == null ? List.of() : excludedFacilityIds;
+        }
     }
 }
