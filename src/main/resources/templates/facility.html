@@ -72,7 +72,7 @@
             <article class="em-chart-card">
               <div class="em-chart-copy">
                 <h2>Year-over-year total releases</h2>
-                <p>Reported on-site TRI releases in pounds, grouped by reporting year.</p>
+                <p>Reported on-site TRI releases in pounds (lbs), grouped by reporting year.</p>
               </div>
               <div class="em-chart-shell">
                 <canvas id="facilityYearChart"></canvas>
@@ -82,7 +82,7 @@
             <article class="em-chart-card">
               <div class="em-chart-copy">
                 <h2>Top chemical totals</h2>
-                <p>The 10 chemicals with the highest cumulative on-site releases across all available years.</p>
+                <p>The 10 chemicals with the highest cumulative on-site releases in pounds (lbs) across all available years.</p>
               </div>
               <div class="em-chart-shell">
                 <canvas id="facilityChemicalChart"></canvas>
@@ -99,10 +99,13 @@
             <div class="table-responsive">
               <table class="table">
                 <thead>
+                  <tr class="em-data-table-note-row">
+                    <th colspan="7">All values in pounds (lbs)</th>
+                  </tr>
                   <tr>
                     <th>Year</th>
                     <th th:each="chemical : ${vm.tableChemicalColumns()}" th:text="${chemical}">Chemical</th>
-                    <th>Total</th>
+                    <th>Total (lbs)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,6 +120,10 @@
                 </tbody>
               </table>
             </div>
+
+            <p class="em-data-table-footnote">
+              ▎ Facilities report to EPA's TRI once they manufacture, process, or use a listed chemical above set thresholds. Once that threshold is crossed, they must report actual releases regardless of size — so a small number reflects genuine low-level discharge, not a data error.
+            </p>
           </section>
         </th:block>
       </th:block>
@@ -170,6 +177,10 @@
             },
             y: {
               beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Pounds (lbs)'
+              },
               ticks: {
                 callback: function (value) {
                   return Number(value).toLocaleString();
@@ -201,6 +212,10 @@
           scales: {
             x: {
               beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Pounds (lbs)'
+              },
               ticks: {
                 callback: function (value) {
                   return Number(value).toLocaleString();

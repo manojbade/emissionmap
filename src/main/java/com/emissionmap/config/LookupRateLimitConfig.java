@@ -2,7 +2,6 @@ package com.emissionmap.config;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,10 +29,10 @@ public class LookupRateLimitConfig {
     @Bean
     public FilterRegistrationBean<Filter> lookupRateLimitFilter() {
         Map<String, Bucket> buckets = new ConcurrentHashMap<>();
-        Bandwidth limit = Bandwidth.classic(
-                LOOKUPS_PER_MINUTE,
-                Refill.greedy(LOOKUPS_PER_MINUTE, Duration.ofMinutes(1))
-        );
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(LOOKUPS_PER_MINUTE)
+                .refillGreedy(LOOKUPS_PER_MINUTE, Duration.ofMinutes(1))
+                .build();
 
         Filter filter = new Filter() {
             @Override

@@ -796,6 +796,14 @@ body.em-results-page .em-masthead {
   text-transform: uppercase;
 }
 
+.em-data-table .em-data-table-note-row th {
+  color: var(--em-accent-strong);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  padding-bottom: 0.75rem;
+  text-transform: none;
+}
+
 .em-data-table td {
   font-size: 0.88rem;
   vertical-align: middle;
@@ -805,6 +813,14 @@ body.em-results-page .em-masthead {
 .em-data-table th:last-child {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
+}
+
+.em-data-table-footnote {
+  color: var(--em-muted);
+  font-size: 0.82rem;
+  line-height: 1.65;
+  margin: 0.95rem 0 0;
+  max-width: 62rem;
 }
 
 /* ── Responsive ─────────────────────────────────────────────────────── */
