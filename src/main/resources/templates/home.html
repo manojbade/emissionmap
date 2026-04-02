@@ -128,25 +128,25 @@
       </div>
     </section>
 
-    <!-- National stats -->
-    <section class="em-stats-section" th:if="${totalFacilities != null and totalFacilities > 0}">
+    <!-- Coverage overview -->
+    <section class="em-stats-section">
       <div class="container">
         <div class="em-stats-grid">
           <div class="em-stat-card">
-            <div class="em-stat-number" th:text="${#numbers.formatInteger(totalFacilities, 0, 'COMMA')}">21,000</div>
-            <div class="em-stat-label">Facilities reported toxic releases in 2024</div>
+            <div class="em-stat-number">1987–2024</div>
+            <div class="em-stat-label">Reporting years available in this release of the EPA Toxic Release Inventory dataset.</div>
           </div>
           <div class="em-stat-card">
-            <div class="em-stat-number" th:text="${totalReleaseBillionsFormatted}">3.1B</div>
-            <div class="em-stat-label">Pounds released on-site nationally (2024)</div>
+            <div class="em-stat-number">Choose any year</div>
+            <div class="em-stat-label">Search by address, radius, and reporting year to compare facilities over time.</div>
           </div>
           <div class="em-stat-card">
-            <div class="em-stat-number" th:text="${#numbers.formatInteger(carcinogenFacilities, 0, 'COMMA')}">9,000</div>
-            <div class="em-stat-label">Reported at least one EPA-classified carcinogen</div>
+            <div class="em-stat-number">Facility detail pages</div>
+            <div class="em-stat-label">See chemical totals, year-over-year trends, and EPA TRI flags for each facility.</div>
           </div>
         </div>
         <p class="text-center mt-4" style="font-size:0.8rem; color:var(--em-muted);">
-          Data: EPA Toxic Release Inventory, Reporting Year 2024, published November 2025
+          Data coverage in this deployment spans EPA TRI reporting years 1987–2024.
         </p>
       </div>
     </section>
@@ -156,8 +156,8 @@
   <footer class="em-footer">
     <div class="container">
       <p>
-        Data: EPA Toxic Release Inventory, Reporting Year 2024, published November 2025.
-        All data sourced directly from EPA TRI Basic Data Files. This tool displays federally reported information only.
+        Data: EPA Toxic Release Inventory, reporting years 1987–2024, sourced from EPA TRI Basic Data Files.
+        This tool displays federally reported information only and lets you browse the loaded reporting years by address.
       </p>
       <p>
         <a href="/about">Methodology</a> &middot;
